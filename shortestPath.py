@@ -3,6 +3,9 @@ from numpy import *
 import matplotlib.pyplot as plt
 
 
+
+
+
 A = dtype({'names': ['ai', 'tan', 'bn'], 'formats': ['i', 'i', 'int32']}, align = True)
 B = dtype({'names': ['road_b','road_h', 'road_e', 'road_l'], 'formats': ['i','i', 'i', 'i']}, align = True)
 C = dtype({'names': ['road_h', 'road_e', 'road_l'], 'formats': ['i', 'i', 'i']}, align = True)
