@@ -1,5 +1,11 @@
+#coding=utf-8
 from numpy import *
 import matplotlib.pyplot as plt
+
+
+A = dtype({'names': ['ai', 'tan', 'bn'], 'formats': ['i', 'i', 'int32']}, align = True)
+B = dtype({'names': ['road_b','road_h', 'road_e', 'road_l'], 'formats': ['i','i', 'i', 'i']}, align = True)
+C = dtype({'names': ['road_h', 'road_e', 'road_l'], 'formats': ['i', 'i', 'i']}, align = True)
 
 
 def file2matrix(filename):
@@ -18,14 +24,16 @@ def file2matrix(filename):
     return returnMat, classLabelVector    
     
     
-def plotflight(dataset, place):
-    weight = []
-    height = []
+def plotflight(dataset, place,priceline):
+    weight = [30,20,30,40,50,40]
+    height = [30,40,50,30,40,50]
     plt.style.use('fivethirtyeight')        
-    plt.title('flight price')    
+    cost = 0
+    plt.ylim(15, 55)
+    plt.xlim(20, 60) 
+ 
     for i in range(6):
-        weight.append(random.randint(i*(3-i)*15, i*(3-i)*15+5))
-        height.append(random.randint((i%2)*15, (i%2)*15+5))
+        
         plt.text(height[i]+1, weight[i]+1, '%d'%(i+1), color='blue')   
         plt.plot(height[i], weight[i], 'ro')             
 
@@ -36,116 +44,110 @@ def plotflight(dataset, place):
             if dataset[i-1][j]<100 and dataset[i-1][j]>0:
                 plt.text((height[i-1]+height[j-1])/2, (weight[i-1]+weight[j-1])/2, '%d'%dataset[i-1][j], color='black')
                 plt.plot([height[i-1], height[j-1]], [weight[i-1], weight[j-1]], color='black', linewidth = 1)                                                                          
+    for x in priceline:  
+        weight_l = [weight[x['road_h']-1],weight[x['road_e']-1]]
+        height_l = [height[x['road_h']-1],height[x['road_e']-1]]                  
+        plt.plot(height_l, weight_l,color='red', linewidth = 10) 
+        plt.text((height[x['road_h']-1]+height[x['road_e']-1])/2+2, (weight[x['road_h']-1]+weight[x['road_e']-1])/2-2, '%d'%x['road_l'], color='red', size = 30)
+        cost+=x['road_l']  
+        
+    plt.title('flight cost : %d $ in total'% cost) 
     plt.show()
 
     return weight, height
 
-def fun1(s): return s if s < 100 and s > 0 else None
 
-
-A = dtype({'names': ['ai', 'tan', 'bn'], 'formats': ['i', 'i' , 'int32']}, align = True)
-B = dtype({'names': ['bni'], 'formats': ['i']}, align = True)
-
-def primgraph(dataset, place):
+def primgraph(startpoint,endpoint):
+    #####################初始化信息读入航班数据###########################
     #the adding struct this turn
     dataset, place = file2matrix('flight_price.txt')
-    #plotflight(dataset, place)
-    An=[];ai=1
-    endpoint = 4 #end point
+    An=[];ai=startpoint
     
-    a = array([(1, 0, 0)], dtype = A)
-    print "adding point = a%d ; shortest way to an = %d "%(a[0]['ai'], a[0]['tan'])
+    #####################寻找源点到第一个点###########################
+    a = array([(startpoint, 0, 0)], dtype = A)    
+    print "adding point = a%d ; Cheapest way to an = %d "%(a[0]['ai'], a[0]['tan'])
     An.append(a[0]['ai'])
-    print An
-    print "adding the v%d point to An[],marked that the point has been found\n"%a[0]['ai']
-    
-    
-    print "the distence near this point is:"
-    print dataset[a[0]['ai']-1][1:]
-    #find the point nearby
-    Nan_value = filter(lambda x: x < 100 and x > 0, dataset[a[0]['ai']-1][1:])
-    print "Nan_value:"
-    print Nan_value
-    
+    print "adding the v%d point to An: "%a[0]['ai'],An
+    print ""   
+     
+    Nan_value = filter(lambda x: x < 100 and x > 0, dataset[a[0]['ai']-1][1:])    
     Nan_index=[]
     for x in Nan_value:
         if list(dataset[a[0]['ai']-1][1:]).index(x)+1 not in An:
             Nan_index.append(list(dataset[a[0]['ai']-1][1:]).index(x)+1)
-    print "Nan_index:"
-    print Nan_index
     
-    #print dataset[a[0]['ai']-1][1:]
     min_bni = min(Nan_value) 
     vi_index=list(dataset[a[0]['ai']-1][1:]).index(min_bni)+1
     print 'the nearest point is the %d point,the price is: %d $'%(vi_index, min_bni)
     a=vstack((a, array([(vi_index, min_bni , 0)], dtype=A)))
+    An.append(vi_index)
+    print "adding the v%d point to An: "%vi_index,An
+    tni = array([(startpoint, vi_index , min_bni)], dtype=C)
+    belong = array([(vi_index, startpoint, vi_index , min_bni)], dtype = B)
+    print ""
+    tvn=min_bni;
     
-    flag=0
-    ti = {}
-    min_price={}
-       
-    for i in range(2):
-        Nan_value=[] 
-        Nan_index=[]
-        dex = a[i]['ai'][0]-1     
-        for x in dataset[dex][1:]:
-            if x>0 and x< 100 :
-                Nan_value.append(x)
-                Nan_value.sort()
-        for x in Nan_value:
-            if list(dataset[dex][1:]).index(x)+1 not in An:
-                Nan_index.append(list(dataset[dex][1:]).index(x)+1)        
-        
-        print "Nan_value [%d]:"%i 
-        print Nan_value
-        print "Nan_index [%d]:"%i 
-        print Nan_index
-        print "the minest point to a%d is v%d "%(i+1,Nan_index[0])
-                    
- 
-    '''
-        for x in Nan_value:
-            if list(dataset[a[i]['ai']-1][1:]).index(x)+1 not in An:
-                Nan_index.append(list(dataset[a[0]['ai']-1][1:]).index(x)+1)
-        print "Nan_index [%d]:"%i 
-        print Nan_index   
-       
-    
-    bni = array(list(Nan_value),dtype = B)
-    print list(Nan_value)
-    print "bni"
-    print bni[0]['bni']
-    
-    
-    ai_1 = vi_index 
-    while ai_1 != endpoint:
+    #####################循环索引标注所有点###########################
+    min_price_epoint=vi_index
+    flag=2
+    while endpoint != min_price_epoint:
         flag=flag+1
-        ti["1-%d"%vi_index]=min_bni
-     
-        print ti
-        a=vstack((a, array([(vi_index, min_bni , 0)], dtype=A))) #adding new point's infor        
+        min_price={}
+        min_price_epoint=0
+        min_price_fpoint=0
+        min_price_ipoint=0
+        min_path=10000;   
         
-        anow=a[flag]['ai'][0]
+        for i in range(len(An)):
+            Nan_value=[] 
+            Nan_index=[]                
+            dex = a[i]['ai'][0]-1                      
+            for x in dataset[dex][1:]:
+                if x>0 and x< 100 :
+                    Nan_value.append(x)
+                    Nan_value.sort()
+            for x in Nan_value:
+                if list(dataset[dex][1:]).index(x)+1 not in An:
+                    Nan_index.append(list(dataset[dex][1:]).index(x)+1)
+            
+        #for i in range(len(An)):
+            if len(Nan_index) > 0:
+                if dataset[dex][Nan_index[0]]+a[i]['tan'] < min_path:                                         
+                    min_path = dataset[dex][Nan_index[0]]
+                    min_price_epoint=Nan_index[0]
+                    min_price_fpoint=dex = dex+1
+                    min_price_ipoint=i
+            print "the new Cheapest path is %d,the new Cheapest point is from %d to %d"%(min_path,min_price_fpoint,min_price_epoint)                  
         
-        print "adding point = a%d ; shortest way from a1 to a%d = %d "%(anow, anow, a[flag]['tan'])
-        
-        An.append(anow)
-        print "An:"
-        print An
-        print "adding the v%d point to An[],marked that the point has been found\n"%anow
-        
-        print "the point near this point is:"        
-        print dataset[anow-1][1:]
+        tvn = a[min_price_ipoint]['tan']+min_path
+        An.append(min_price_epoint)
+        tni = vstack((tni, array([(min_price_fpoint,min_price_epoint, min_path)], dtype=C)))
+        a=vstack((a, array([(min_price_epoint, tvn , 0)], dtype=A)))       
+        print "adding the v%d point to An[]:"%min_price_epoint,An
+        print ""
+    
+    road = findroad(startpoint,endpoint,tni)    
+    print "the Cheapest way from %d to %d may cost you %d $ in total"%(startpoint,endpoint,tvn)    
+    plotflight(dataset, place, road)
 
-        #find the point nearby
-        Nan_value = filter(lambda x: x<100 and x > 0 and list(dataset[anow-1][1:]).index(x)+1 not in An, dataset[anow-1][1:])
-        print "Nan_value:";print Nan_value                                                  
-        Nan_index=[]
-        for x in Nan_value:
-            Nan_index.append(list(dataset[anow-1][1:]).index(x)+1)        
-        print "Nan_index:";print Nan_index
-        min_bni = min(Nan_value)
-        vi_index=list(dataset[anow-1][1:]).index(min_bni)+1  
-        print 'the nearest point is the %d point,the price is: %d $'%(vi_index, min_bni)      
-        ai_1 = vi_index
-    '''
+
+def findroad(start, end, tni):
+    
+    startpoint=0
+    a = tni[-1]
+    startpoint = a['road_h']
+    flag=1
+    while startpoint != start:
+        lentni = len(tni)   
+        if tni[-flag-1]['road_e'] == tni[-flag]['road_h']:
+            startpoint=tni[-flag-1]['road_h']
+            a = vstack((tni[lentni-flag-1],a))
+            flag=flag+1
+        else:
+            tni = vstack((tni[:lentni-flag-1],tni[lentni-flag:]))
+    
+    print "the final path is :"
+    for x in a:
+        print "take the flight from %d to %d, cost %d $"%(x['road_h'], x['road_e'], x['road_l'])
+    return a
+   
