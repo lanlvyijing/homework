@@ -60,6 +60,10 @@ def plotflight(dataset, place,priceline):
 def primgraph(startpoint,endpoint):
     #####################初始化信息读入航班数据###########################
     #the adding struct this turn
+    reversmark=0
+    if startpoint > endpoint:
+        startpoint, endpoint=endpoint, startpoint
+        reversmark=1
     dataset, place = file2matrix('flight_price.txt')
     An=[];ai=startpoint
     
@@ -125,8 +129,10 @@ def primgraph(startpoint,endpoint):
         a=vstack((a, array([(min_price_epoint, tvn , 0)], dtype=A)))       
         print "adding the v%d point to An[]:"%min_price_epoint,An
         print ""
-    
-    road = findroad(startpoint,endpoint,tni)    
+    print "tni = ",tni
+    road = findroad(startpoint,endpoint,tni)
+    if reversmark==1:   
+        startpoint, endpoint=endpoint, startpoint
     print "the Cheapest way from %d to %d may cost you %d $ in total"%(startpoint,endpoint,tvn)    
     plotflight(dataset, place, road)
 
@@ -134,8 +140,11 @@ def primgraph(startpoint,endpoint):
 def findroad(start, end, tni):
     
     startpoint=0
-    a = tni[-1]
+    a = array([(0, 0, 0)], dtype = C)
+    a[0] = tni[-1]
+    
     startpoint = a['road_h']
+    #print "x['road_l']:",a['road_l']
     flag=1
     while startpoint != start:
         lentni = len(tni)   
@@ -146,7 +155,7 @@ def findroad(start, end, tni):
         else:
             tni = vstack((tni[:lentni-flag-1],tni[lentni-flag:]))
     
-    print "the final path is :"
+    print "the final path is :"    
     for x in a:
         print "take the flight from %d to %d, cost %d $"%(x['road_h'], x['road_e'], x['road_l'])
     return a
